@@ -1,0 +1,1 @@
+STN_FILE = "data/PrecoTaxaTesouroDireto.csv"
