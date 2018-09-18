@@ -1,15 +1,15 @@
 class Titulo():
 
-	self.TIPO_TITULO = 'tt'
-	self.DATA_VENCIMENTO = 'dv'
-	self.DATA_BASE = 
-	self.TAXA_COMPRA_MANHA = 'tc'
-	self.TAXA_VENDA_MANHA = 'tv'
-	self.PU_COMPRA_MANHA = 'puc'
-	self.PU_VENDA_MANHA = 'puv'
-	self.PU_BASE_MANHA = 'pub'
+	TIPO_TITULO = 'tt'
+	DATA_VENCIMENTO = 'dv'
+	DATA_BASE = 'db'
+	TAXA_COMPRA_MANHA = 'tc'
+	TAXA_VENDA_MANHA = 'tv'
+	PU_COMPRA_MANHA = 'puc'
+	PU_VENDA_MANHA = 'puv'
+	PU_BASE_MANHA = 'pub'
 
-	self.verbose = {
+	verbose = {
 		'tt' : 'Tipo Titulo', 
 		'dv' : 'Data Vencimento',
 		'db' : 'Data Base',
@@ -24,8 +24,12 @@ class Titulo():
 
 		self._info_titulo = {}
 		
-		for key, value in self.verbose:
-			self._info_titulo[key] = data[key]
+		for key, value in self.verbose.items():
+			if data[key].replace(',', '').isdigit():
+				self._info_titulo[key] = eval(data[key].replace(',', '.'))
+
+			else:
+				self._info_titulo[key] = data[key]
 
 	def getInfoAll(self):
 		return self._info_titulo
@@ -56,3 +60,10 @@ class Titulo():
 
 	def getInfo(self, value):
 		return self._info_titulo[value]
+
+	def __str__(self):
+		strTitulo = ""
+		for key, value in self._info_titulo.items():
+			strTitulo += "{0}: {1}\n".format(self.verbose[key], value)
+
+		return strTitulo[:-1]
