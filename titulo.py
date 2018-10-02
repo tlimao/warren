@@ -1,23 +1,24 @@
+from datetime import datetime
+from enum import Enum
+
 class Titulo():
 
 	TIPO_TITULO = 'tt'
 	DATA_VENCIMENTO = 'dv'
 	DATA_BASE = 'db'
-	TAXA_COMPRA_MANHA = 'tc'
-	TAXA_VENDA_MANHA = 'tv'
-	PU_COMPRA_MANHA = 'puc'
-	PU_VENDA_MANHA = 'puv'
-	PU_BASE_MANHA = 'pub'
+	TAXA_COMPRA = 'tc'
+	TAXA_VENDA = 'tv'
+	PU_COMPRA= 'puc'
+	PU_VENDA = 'puv'
 
 	verbose = {
 		'tt' : 'Tipo Titulo', 
 		'dv' : 'Data Vencimento',
 		'db' : 'Data Base',
-		'tc' : 'Taxa Compra Manha',
-		'tv' : 'Taxa Venda Manha',
-		'puc' : 'PU Compra Manha',
-		'puv' : 'PU Venda Manha',
-		'pub' : 'PU Base Manha'
+		'tc' : 'Taxa Compra',
+		'tv' : 'Taxa Venda',
+		'puc' : 'PU Compra',
+		'puv' : 'PU Venda'
 	}
 
 	def __init__(self, data):
@@ -38,10 +39,10 @@ class Titulo():
 		return self._info_titulo['tt']
 
 	def getDv(self):
-		return self._info_titulo['dv']
+		return datetime.strptime(self._info_titulo['dv'], '%d/%m/%Y')
 
 	def getDb(self):
-		return self._info_titulo['db']
+		return datetime.strptime(self._info_titulo['db'], '%d/%m/%Y')
 
 	def getTc(self):
 		return self._info_titulo['tc']
@@ -55,9 +56,6 @@ class Titulo():
 	def getPuv(self):
 		return self._info_titulo['puv']
 
-	def getPub(self):
-		return self._info_titulo['pub']
-
 	def getInfo(self, value):
 		return self._info_titulo[value]
 
@@ -67,3 +65,9 @@ class Titulo():
 			strTitulo += "{0}: {1}\n".format(self.verbose[key], value)
 
 		return strTitulo[:-1]
+
+class TipoTitulo(Enum):
+
+	IPCA = "IPCA"
+	SELIC = "SELIC"
+	PRE = "PREFIXADO"
