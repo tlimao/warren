@@ -2,6 +2,7 @@ import pandas as pd
 import time
 from titulo import TipoTitulo
 from stndaemon import StnDaemon
+from datetime import datetime
 
 class StnEstatisticas():
 
@@ -26,12 +27,17 @@ class StnEstatisticas():
 			tipo = titulo.getTt().upper()
 			vencimento = titulo.getDv()
 
-			if TipoTitulo.IPCA.value in tipo:
-				self._array_titulos[TipoTitulo.IPCA.value].append(titulo)
-			elif TipoTitulo.SELIC.value in tipo:
-				self._array_titulos[TipoTitulo.SELIC.value].append(titulo)
-			elif TipoTitulo.PRE.value in tipo:
-				self._array_titulos[TipoTitulo.PRE.value].append(titulo)
+			if vencimento > datetime.now():
+				if TipoTitulo.IPCA.value in tipo:
+					self._array_titulos[TipoTitulo.IPCA.value].append(titulo)
+				elif TipoTitulo.SELIC.value in tipo:
+					self._array_titulos[TipoTitulo.SELIC.value].append(titulo)
+				elif TipoTitulo.PRE.value in tipo:
+					self._array_titulos[TipoTitulo.PRE.value].append(titulo)
+
+		print(len(self._array_titulos[TipoTitulo.IPCA.value]))
+		print(len(self._array_titulos[TipoTitulo.SELIC.value]))
+		print(len(self._array_titulos[TipoTitulo.PRE.value]))
 
 	def _initArrayTitulos(self):
 		for tipo in list(TipoTitulo):
@@ -45,5 +51,5 @@ class StnEstatisticas():
 
 if __name__ == '__main__':
 	estatisticas = StnEstatisticas()
-	time.sleep(5)
+	time.sleep(10)
 	estatisticas.processData()
