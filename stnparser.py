@@ -4,7 +4,7 @@ import re
 
 class StnParser(HTMLParser):
 
-	meta = { '0' : 'tt', '1' : 'dv', '2' : 'tc', '3' : 'vm', '4' : 'pu', '5' : 'cv' }
+	meta = { '0' : 'tt', '1' : 'dv', '2' : 'tc', '3' : 'vm', '4' : 'pu', '5' : 'cv', '6' : 'db' }
 	state = [False, -1, 0]
 	titulo = None
 	titulos = []

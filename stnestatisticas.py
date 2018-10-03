@@ -30,13 +30,10 @@ class StnEstatisticas():
 			if vencimento > datetime.now():
 				if TipoTitulo.IPCA.value in tipo:
 					self._array_titulos[TipoTitulo.IPCA.value].append(titulo)
-				elif TipoTitulo.SELIC.value in tipo:
-					self._array_titulos[TipoTitulo.SELIC.value].append(titulo)
 				elif TipoTitulo.PRE.value in tipo:
 					self._array_titulos[TipoTitulo.PRE.value].append(titulo)
 
 		print(len(self._array_titulos[TipoTitulo.IPCA.value]))
-		print(len(self._array_titulos[TipoTitulo.SELIC.value]))
 		print(len(self._array_titulos[TipoTitulo.PRE.value]))
 
 	def _initArrayTitulos(self):

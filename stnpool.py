@@ -67,13 +67,19 @@ class StnPool(threading.Thread):
 				# Atualizar Pool
 				self._poolTitulos = dados_titulos[:-1]
 
+		self._titulosCompra = []
+		self._titulosVenda = []
+
 		for titulo in self._poolTitulos:
-			self._titulosCompra = []
-			self._titulosVenda = []
 			# Títulos para compra
+			titulo['db'] = datetime.strptime(data_hora_stn, '%d/%m/%Y')
 			
 			if titulo['cv'] == 0:
 				self._titulosCompra.append(titulo)
 			# Titulos para venda
 			else:
 				self._titulosVenda.append(titulo)
+
+if __name__ == '__main__':
+	pool = StnPool()
+	pool.start()
