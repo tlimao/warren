@@ -8,8 +8,7 @@ class Titulo():
 	DATA_BASE = 'db'
 	TAXA_COMPRA = 'tc'
 	TAXA_VENDA = 'tv'
-	PU_COMPRA= 'puc'
-	PU_VENDA = 'puv'
+	PU = 'pu'
 
 	verbose = {
 		'tt' : 'Tipo Titulo', 
@@ -17,15 +16,14 @@ class Titulo():
 		'db' : 'Data Base',
 		'tc' : 'Taxa Compra',
 		'tv' : 'Taxa Venda',
-		'puc' : 'PU Compra',
-		'puv' : 'PU Venda'
+		'pu' : 'Preço Unitário'
 	}
 
 	def __init__(self, data):
 
 		self._info_titulo = {}
 		
-		for key, value in self.verbose.items():
+		for key, value in data.items():
 			if data[key].replace(',', '').isdigit():
 				self._info_titulo[key] = eval(data[key].replace(',', '.'))
 
@@ -50,11 +48,8 @@ class Titulo():
 	def getTv(self):
 		return self._info_titulo['tv']
 
-	def getPuc(self):
-		return self._info_titulo['puc']
-
-	def getPuv(self):
-		return self._info_titulo['puv']
+	def getPu(self):
+		return self._info_titulo['pu']
 
 	def getInfo(self, value):
 		return self._info_titulo[value]
@@ -66,8 +61,23 @@ class Titulo():
 
 		return strTitulo[:-1]
 
+	def isCompra(self):
+		if 'tc' in self._info_titulo.keys():
+			return True
+
+		else:
+			return False
+
+	def isVenda(self):
+		if 'tv' in self._info_titulo.keys():
+			return True
+
+		else:
+			return False
+
 class TipoTitulo(Enum):
 
 	IPCA = "IPCA"
 	SELIC = "SELIC"
 	PRE = "PREFIXADO"
+	JUROS_SEMESTRAIS = "SEMESTRAIS"
