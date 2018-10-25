@@ -24,8 +24,8 @@ class Titulo():
 		self._info_titulo = {}
 		
 		for key, value in data.items():
-			if data[key].replace(',', '').isdigit():
-				self._info_titulo[key] = eval(data[key].replace(',', '.'))
+			if data[key].replace(',', '').replace('.', '').isdigit():
+				self._info_titulo[key] = eval(data[key].replace('.', '').replace(',', '.'))
 
 			else:
 				self._info_titulo[key] = data[key]
@@ -78,6 +78,6 @@ class Titulo():
 class TipoTitulo(Enum):
 
 	IPCA = "IPCA"
-	SELIC = "SELIC"
-	PRE = "PREFIXADO"
-	JUROS_SEMESTRAIS = "SEMESTRAIS"
+	SELIC = "Selic"
+	PRE = "Prefixado"
+	JUROS_SEMESTRAIS = "Semestrais"

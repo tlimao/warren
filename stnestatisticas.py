@@ -12,49 +12,54 @@ class StnEstatisticas():
 	def __init__(self):
 		self._stnpool = StnPool()
 		self._stnpool.start()
-		time.sleep(20)
-		self._titulos_ativos = self._stnpool.getTitulosAtivos()
+		time.sleep(40)
 
+		self._titulos_ativos = self._stnpool.getTitulosAtivos()
 		self._array_titulos = {}
+
+		self._data_plot = {}
 		self._MmL = []
 		self._MmE = []
 
 		self._data_final = datetime.now()
-		self._data_inicial = self._data_final + timedelta(days=-900)
+		self._data_inicial = self._data_final + timedelta(days=-200)
 
 		self._MM_WINDOW_SHORT = 2
 		self._MM_WINDOW_LONG = 15
 
-		self._initArrayTitulos()
-
 	def processData(self):
-		titulos = self._stnpool.getHistoricoTitulos()
-		titulos_hoje = self._stnpool.getTitulos()
+		# Iniciar Dict Dados
+		for key_compra_venda, values_tipo_vencimento in self._titulos_ativos.items():
+			self._data_plot[key_compra_venda] = {}
+			for key_tipo, values_vencimento in values_tipo_vencimento.items():
+				self._data_plot[key_compra_venda][key_tipo] = {}
+				for vencimento in values_vencimento:
+					self._data_plot[key_compra_venda][key_tipo][vencimento] = {
+						'titulos' : [], 'taxas' : [], 'datas' : [] }
 
-		for titulo in titulos:
-			tipo = titulo.getTt().upper()
+		# Processar Dados de Compra
+		titulos_compra = self._stnpool.getHistoricoTitulosCompra()
+		for titulo in titulos_compra:
+			tipo = titulo.getTt() + " " + str(titulo.getDv().year)
 			vencimento = titulo.getDv()
-			dataBase = titulo.getDb()
+			data = titulo.getDb()
+			taxa = titulo.getTc()
+			if tipo in self._titulos_ativos['compra'] and data > self._data_inicial:
+				self._data_plot['compra'][tipo][vencimento]['titulos'].append(titulo)
+				self._data_plot['compra'][tipo][vencimento]['taxas'].append(taxa)
+				self._data_plot['compra'][tipo][vencimento]['datas'].append(data)
 
-			if vencimento > self._data_final and dataBase > self._data_inicial:
-				if TipoTitulo.IPCA.value in tipo:
-					self._array_titulos[TipoTitulo.IPCA.value].append(titulo)
-				elif TipoTitulo.PRE.value in tipo:
-					self._array_titulos[TipoTitulo.PRE.value].append(titulo)
-
-		#for titulo in titulos_hoje:
-		#	tipo = titulo.getTt().upper()
-		#	vencimento = titulo.getDv()
-		#	dataBase = titulo.getDb()
-
-		#	if TipoTitulo.IPCA.value in tipo:
-		#		self._array_titulos[TipoTitulo.IPCA.value].append(titulo)
-		#	elif TipoTitulo.PRE.value in tipo:
-		#		self._array_titulos[TipoTitulo.PRE.value].append(titulo)
-
-	def _initArrayTitulos(self):
-		for tipo in list(TipoTitulo):
-			self._array_titulos[tipo.value] = []
+		# Processar Dados de Venda
+		titulos_venda = self._stnpool.getHistoricoTitulosVenda()
+		for titulo in titulos_venda:
+			tipo = titulo.getTt() + " " + str(titulo.getDv().year)
+			vencimento = titulo.getDv()
+			data = titulo.getDb()
+			taxa = titulo.getTv()
+			if tipo in self._titulos_ativos['venda'] and data > self._data_inicial:
+				self._data_plot['venda'][tipo][vencimento]['titulos'].append(titulo)
+				self._data_plot['venda'][tipo][vencimento]['taxas'].append(taxa)
+				self._data_plot['venda'][tipo][vencimento]['datas'].append(data)
 
 	def getMmL(self):
 		pass
@@ -63,47 +68,27 @@ class StnEstatisticas():
 		pass
 
 	def plot(self, tipo, compraVenda, vencimento):
-		data_plot = {}
-
-		for t in self._array_titulos[tipo]:
-			tipo_titulo = t.getTt().upper()
-			data_vencimento = t.getDv()
-			if tipo in tipo_titulo and data_vencimento >= vencimento:
-				if compraVenda == 'compra' and t.isCompra() and \
-					(tipo_titulo + " " + str(data_vencimento.year)) in self._titulos_ativos['compra']:
-					if tipo_titulo not in data_plot:
-						data_plot[tipo_titulo] = { str(data_vencimento) : [[], []] }
-
-					if str(data_vencimento) not in data_plot[tipo_titulo]:
-						data_plot[tipo_titulo][str(data_vencimento)] = [[], []]
-
-					data_plot[tipo_titulo][str(data_vencimento)][0].append(t.getTc())
-					data_plot[tipo_titulo][str(data_vencimento)][1].append(t.getDb())
-
-				elif compraVenda == 'venda' and t.isVenda() and \
-					(tipo_titulo + " " + str(data_vencimento.year)) in self._titulos_ativos['venda']:
-					y_taxas.append(t.getTv())
-					x_datas.append(str(t.getDb()))
-
 		years = mdates.MonthLocator()
 		months = mdates.DayLocator()
 		yearsFmt = mdates.DateFormatter('%d-%m-%Y')
 
 		fig, ax = plt.subplots()
 
-		for key_tipo, value_tipo in data_plot.items():
-			for key_vencimento, value_vencimento in value_tipo.items():
-				ax.plot(value_vencimento[1], value_vencimento[0], label=str(key_tipo) + " (" + str(key_vencimento).replace(" 00:00:00", "") + ")")
-				s = pd.Series(value_vencimento[0])
-				ax.plot(value_vencimento[1], s.rolling(self._MM_WINDOW_SHORT).mean().tolist(), label=str(key_tipo) + " (" + str(key_vencimento).replace(" 00:00:00", "MM") + ")")
-				ax.plot(value_vencimento[1], s.rolling(self._MM_WINDOW_LONG).mean().tolist(), label=str(key_tipo) + " (" + str(key_vencimento).replace(" 00:00:00", "MM") + ")")
+		for key_tipo, values_tipo in self._data_plot[compraVenda].items():
+			if tipo in key_tipo:
+				for key_vencimento, values_vencimento in values_tipo.items():
+					if key_vencimento.year >= vencimento.year:
+						ax.plot(values_vencimento['datas'], values_vencimento['taxas'], label=key_tipo)
+						s = pd.Series(values_vencimento['taxas'])
+						ax.plot(values_vencimento['datas'], s.rolling(self._MM_WINDOW_SHORT).mean().tolist(), label=str(key_tipo) + " MM")
+						ax.plot(values_vencimento['datas'], s.rolling(self._MM_WINDOW_LONG).mean().tolist(), label=str(key_tipo) + " MM")
 
 			# format the ticks
 			ax.xaxis.set_major_locator(years)
 			ax.xaxis.set_major_formatter(yearsFmt)
 			ax.xaxis.set_minor_locator(months)
 
-			ax.set_facecolor('xkcd:black')
+			#ax.set_facecolor('xkcd:black')
 
 			# round to nearest years...
 			datemin = np.datetime64(self._data_inicial, 'M')
@@ -118,4 +103,4 @@ class StnEstatisticas():
 if __name__ == '__main__':
 	estatisticas = StnEstatisticas()
 	estatisticas.processData()
-	estatisticas.plot(TipoTitulo.IPCA.value, 'compra', datetime.strptime('01/01/2047', '%d/%m/%Y'))
+	estatisticas.plot(TipoTitulo.PRE.value, 'compra', datetime.strptime('01/01/2026', '%d/%m/%Y'))

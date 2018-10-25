@@ -3,7 +3,7 @@ import urllib.request
 import ssl
 from html.parser import HTMLParser
 from datetime import datetime, timedelta
-from titulo import Titulo
+from titulo import Titulo, TipoTitulo
 from common import *
 
 class StnPageParser(HTMLParser):
@@ -60,6 +60,7 @@ class StnPageParser(HTMLParser):
 			if (self._state[1] == 0 and self._state[2] == 4) or \
 			   (self._state[1] == 1 and self._state[2] == 3):
 				self._titulo['db'] = datetime.now().strftime("%d/%m/%Y")
+				self._titulo['pu'] = self._titulo['pu'].replace('R$', '')
 
 				if self._state[1] == 0:
 					self._titulosCompra.append(Titulo(self._titulo))

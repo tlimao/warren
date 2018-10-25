@@ -52,20 +52,26 @@ class StnPool(threading.Thread):
 	def getHistoricoTitulos(self):
 		return self._poolHistoricoTitulos
 
-	def getHistoricoTitulosCompra(self, tipo):
+	def getHistoricoTitulosCompra(self, tipo=None):
 		return self._getHistoricoTitulo(tipo, compraVenda='compra')
 
-	def getHistoricoTitulosVenda(self, tipo):
+	def getHistoricoTitulosVenda(self, tipo=None):
 		return self._getHistoricoTitulo(tipo, compraVenda='venda')
 
-	def _getHistoricoTitulo(self, tipo, compraVenda=None):
+	def _getHistoricoTitulo(self, tipo=None, compraVenda=None):
 		query_result = []
 		
 		if compraVenda != None:
 			for t in self._poolHistoricoTitulos:
-				if tipo.name in t.getTt().upper():
+				if tipo != None:
+					if tipo.name in t.getTt().upper():
+						if compraVenda == 'compra' and t.isCompra():
+							query_result.append(t)
+						elif compraVenda == 'venda' and t.isVenda():
+							query_result.append(t)
+				else:
 					if compraVenda == 'compra' and t.isCompra():
-						query_result.append(t)
+							query_result.append(t)
 					elif compraVenda == 'venda' and t.isVenda():
 						query_result.append(t)
 		else:
@@ -89,7 +95,7 @@ class StnPool(threading.Thread):
 
 		if self._isFirsTime or stn_page_datetime != self._lastUpdate:
 			self._isFirsTime = False
-			self._lastUpdate = stn_page_datetime
+			#self._lastUpdate = stn_page_datetime
 			self._poolTitulos = self._titulosVenda + self._titulosCompra
 			self._poolTitulos.sort(key=lambda x: x.getDb())
 
@@ -97,16 +103,22 @@ class StnPool(threading.Thread):
 			self._titulos_ativos = { 'compra' : {}, 'venda' : {} }
 
 			for t in self._titulosCompra:
-				titulo_tipo = t.getTt().upper()
+				titulo_tipo = t.getTt()
 				titulo_vencimento = t.getDv()
 
-				self._titulos_ativos['compra'][titulo_tipo] = 'ativo'
+				if titulo_tipo in self._titulos_ativos['compra']:
+					self._titulos_ativos['compra'][titulo_tipo].append(titulo_vencimento)
+				else:
+					self._titulos_ativos['compra'][titulo_tipo] = [titulo_vencimento]
 
 			for t in self._titulosVenda:
-				titulo_tipo = t.getTt().upper()
+				titulo_tipo = t.getTt()
 				titulo_vencimento = t.getDv()
 				
-				self._titulos_ativos['venda'][titulo_tipo] = 'ativo'
+				if titulo_tipo in self._titulos_ativos['venda']:
+					self._titulos_ativos['venda'][titulo_tipo].append(titulo_vencimento)
+				else:
+					self._titulos_ativos['venda'][titulo_tipo] = [titulo_vencimento]
 
 		# Atualiza os dados históricos
 		if self._lastUpdate == None or datetime.now().day != self._lastUpdate.day:
