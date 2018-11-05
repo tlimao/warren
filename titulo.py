@@ -3,20 +3,26 @@ from enum import Enum
 
 class Titulo():
 
-	TIPO_TITULO = 'tt'
-	DATA_VENCIMENTO = 'dv'
-	DATA_BASE = 'db'
-	TAXA_COMPRA = 'tc'
-	TAXA_VENDA = 'tv'
-	PU = 'pu'
+	verbose_keys = {
+		 'Tipo Titulo'           : 'tt', 
+		 'Data Vencimento'       : 'dv',
+		 'Data Base'             : 'db',
+		 'Taxa Compra'           : 'tc',
+		 'Taxa Venda'      	     : 'tv',
+		 'Valor Mínimo'          : 'vm',
+		 'Preço Unitário Compra' : 'puc',
+		 'Preço Unitário Venda'  : 'puv'
+	}
 
-	verbose = {
-		'tt' : 'Tipo Titulo', 
-		'dv' : 'Data Vencimento',
-		'db' : 'Data Base',
-		'tc' : 'Taxa Compra',
-		'tv' : 'Taxa Venda',
-		'pu' : 'Preço Unitário'
+	keys_verbose = {
+		'tt'  : 'Tipo Titulo', 
+		'dv'  : 'Data Vencimento',
+		'db'  : 'Data Base',
+		'tc'  : 'Taxa Compra',
+		'tv'  : 'Taxa Venda',
+		'vm'  : 'Valor Mínimo',
+		'puc' : 'Preço Unitário Compra',
+		'puv' : 'Preço Unitário Venda'
 	}
 
 	def __init__(self, data):
@@ -29,6 +35,16 @@ class Titulo():
 
 			else:
 				self._info_titulo[key] = data[key]
+
+	def getVm(self):
+		fracao_titulo = self._info_titulo['puc'] / 100
+
+		valor_minimo = 0
+
+		while valor_minimo < 30:
+			valor_minimo += fracao_titulo
+
+		return valor_minimo
 
 	def getInfoAll(self):
 		return self._info_titulo
@@ -48,8 +64,11 @@ class Titulo():
 	def getTv(self):
 		return self._info_titulo['tv']
 
-	def getPu(self):
-		return self._info_titulo['pu']
+	def getPu(self, compraVenda=None):
+		if compraVenda == None:
+			return self._info_titulo['puc'], self._info_titulo['puv']
+		else:
+			return self._info_titulo['puc'] if compraVenda == 'compra' else self._info_titulo['puc']
 
 	def getInfo(self, value):
 		return self._info_titulo[value]
@@ -57,27 +76,14 @@ class Titulo():
 	def __str__(self):
 		strTitulo = ""
 		for key, value in self._info_titulo.items():
-			strTitulo += "{0}: {1}\n".format(self.verbose[key], value)
+			strTitulo += "{0}: {1}\n".format(self.keys_verbose[key], value)
 
 		return strTitulo[:-1]
 
-	def isCompra(self):
-		if 'tc' in self._info_titulo.keys():
-			return True
-
-		else:
-			return False
-
-	def isVenda(self):
-		if 'tv' in self._info_titulo.keys():
-			return True
-
-		else:
-			return False
-
 class TipoTitulo(Enum):
 
-	IPCA = "IPCA"
+	IPCA = "IPCA+"
+	IPCA_JUROS_SEMESTRAIS = "IPCA+ com Juros Semestrais"
 	SELIC = "Selic"
 	PRE = "Prefixado"
-	JUROS_SEMESTRAIS = "Semestrais"
+	PRE_JUROS_SEMESTRAIS = "Prefixado com Juros Semestrais"

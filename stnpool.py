@@ -4,7 +4,7 @@ from stncrawler import StnPageCrawler, StnFileCrawler
 from datetime import datetime
 from titulo import TipoTitulo, Titulo
 
-class StnPool(threading.Thread):
+class StnPool():#threading.Thread):
 
 	def __init__(self):
 		self._isFirsTime = True
@@ -16,79 +16,36 @@ class StnPool(threading.Thread):
 		self._titulosCompra = None
 		self._titulosVenda = None
 		
-		self._poolHistoricoTitulos = None
-		self._historicoTitulosCompra = None
-		self._historicoTitulosVenda = None
+		self._historicoTitulos = None
 
 		self._stnpagecrawler = StnPageCrawler()
 		self._stnfilecrawler = StnFileCrawler()
+		self.process()
+		#super(StnPool, self).__init__()
 
-		super(StnPool, self).__init__()
+	def getTitulo(self, tipo, vencimento, date=None):
+		query_result = []
+
+		for t in self._historicoTitulos:
+			if t.getDv() == vencimento and t.getTt() == tipo:
+				if date != None:
+					if date == t.getDb():
+						query_result.append(t)
+				else:
+					query_result.append(t)
+		
+		return query_result
 
 	def getTitulos(self):
 		return self._poolTitulos
 
-	def getTitulosCompra(self, tipo):
-		return self._getTitulo(tipo, compraVenda='compra')
-
-	def getTitulosVenda(self, tipo):
-		return self._getTitulo(tipo, compraVenda='venda')
-
-	def _getTitulo(self, tipo, compraVenda=None):
-		query_result = []
-		
-		if compraVenda != None:
-			for t in self._poolTitulos:
-				if tipo.name in t.getTt().upper():
-					if compraVenda == 'compra' and t.isCompra():
-						query_result.append(t)
-					elif compraVenda == 'venda' and t.isVenda():
-						query_result.append(t)
-		else:
-			query_result = self._poolTitulos
-
-		return query_result
-
 	def getHistoricoTitulos(self):
-		return self._poolHistoricoTitulos
-
-	def getHistoricoTitulosCompra(self, tipo=None):
-		return self._getHistoricoTitulo(tipo, compraVenda='compra')
-
-	def getHistoricoTitulosVenda(self, tipo=None):
-		return self._getHistoricoTitulo(tipo, compraVenda='venda')
-
-	def _getHistoricoTitulo(self, tipo=None, compraVenda=None):
-		query_result = []
-		
-		if compraVenda != None:
-			for t in self._poolHistoricoTitulos:
-				if tipo != None:
-					if tipo.name in t.getTt().upper():
-						if compraVenda == 'compra' and t.isCompra():
-							query_result.append(t)
-						elif compraVenda == 'venda' and t.isVenda():
-							query_result.append(t)
-				else:
-					if compraVenda == 'compra' and t.isCompra():
-							query_result.append(t)
-					elif compraVenda == 'venda' and t.isVenda():
-						query_result.append(t)
-		else:
-			query_result = self._poolHistoricoTitulos
-
-		return query_result
-
-	def getTitulosAtivosCompra(self):
-		return self._titulos_ativos['compra']
-
-	def getTitulosAtivosVenda(self):
-		return self._titulos_ativos['venda']
+		return self._historicoTitulos
 
 	def getTitulosAtivos(self):
 		return self._titulos_ativos
 
-	def run(self):
+	def process(self):
 		#while True:
 		# Crawling na página do Tesouro para pegar os valores de venda atuais
 		self._titulosCompra, self._titulosVenda, stn_page_datetime = self._stnpagecrawler.crawling()
@@ -105,7 +62,6 @@ class StnPool(threading.Thread):
 			for t in self._titulosCompra:
 				titulo_tipo = t.getTt()
 				titulo_vencimento = t.getDv()
-
 				if titulo_tipo in self._titulos_ativos['compra']:
 					self._titulos_ativos['compra'][titulo_tipo].append(titulo_vencimento)
 				else:
@@ -122,7 +78,11 @@ class StnPool(threading.Thread):
 
 		# Atualiza os dados históricos
 		if self._lastUpdate == None or datetime.now().day != self._lastUpdate.day:
-			self._historicoTitulosCompra, self._historicoTitulosVenda, stn_file_datetime = self._stnfilecrawler.crawling()
-			self._poolHistoricoTitulos = self._historicoTitulosVenda + self._historicoTitulosCompra
-			self._poolHistoricoTitulos.sort(key=lambda x: x.getDb())
+			self._historicoTitulos, stn_file_datetime = self._stnfilecrawler.crawling()
+			self._historicoTitulos.sort(key=lambda x: x.getDb())
 
+if __name__ == "__main__":
+	stnpool= StnPool()
+	result = stnpool.getTitulo(TipoTitulo.PRE.value, datetime.strptime('01/01/2023', '%d/%m/%Y'), datetime.strptime('10/10/2018', '%d/%m/%Y'))
+	for r in result:
+		print(r)

@@ -9,8 +9,8 @@ from common import *
 class StnPageParser(HTMLParser):
 
 	def __init__(self):
-		self._compra_dict = { '0' : 'tt', '1' : 'dv', '2' : 'tc', '3' : 'vm' , '4' : 'pu' }
-		self._venda_dict = { '0' : 'tt', '1' : 'dv', '2' : 'tv', '3' : 'pu' }
+		self._compra_dict = { '0' : 'tt', '1' : 'dv', '2' : 'tc', '3' : 'vm' , '4' : 'puc' }
+		self._venda_dict = { '0' : 'tt', '1' : 'dv', '2' : 'tv', '3' : 'puv' }
 		# [Título Novo, Compra ou Venda, Atributo]
 		self._state = [False, 0, -1]
 		self._titulo = None
@@ -50,9 +50,9 @@ class StnPageParser(HTMLParser):
 			self._state[1] = 1
 
 		if self._state[0] and data != ' ':
-			if self._state[1] == 0 and self._state[2] != 3:
+			if self._state[1] == 0:
+				if self._state[2] != 3:
 					self._titulo[self._compra_dict[str(self._state[2])]] = data
-
 			else:
 				self._titulo[self._venda_dict[str(self._state[2])]] = data
 
@@ -60,12 +60,15 @@ class StnPageParser(HTMLParser):
 			if (self._state[1] == 0 and self._state[2] == 4) or \
 			   (self._state[1] == 1 and self._state[2] == 3):
 				self._titulo['db'] = datetime.now().strftime("%d/%m/%Y")
-				self._titulo['pu'] = self._titulo['pu'].replace('R$', '')
+				self._titulo['tt'] = self._titulo['tt'][8:len(self._titulo['tt']) - 5]
 
 				if self._state[1] == 0:
+					self._titulo['puc'] = self._titulo['puc'].replace('R$', '')
 					self._titulosCompra.append(Titulo(self._titulo))
 				else:
+					self._titulo['puv'] = self._titulo['puv'].replace('R$', '')
 					self._titulosVenda.append(Titulo(self._titulo))
+				#print(self._titulo)
 
 				self._state[0] = False
 				self._state[2] = -1
@@ -80,9 +83,10 @@ class StnPageParser(HTMLParser):
 
 class StnFileParser():
 
+	CONSTRAINT = 'IGPM+'
+
 	def __init__(self):
-		self._titulosCompra = []
-		self._titulosVenda = []
+		self._titulos = []
 
 	def parse(self, data):
 		# Lê a primeira linha e que será descartada
@@ -92,25 +96,19 @@ class StnFileParser():
 		while line != "":
 			values = line.replace('\n', '').split(';')
 
-			tituloInfoCompra = {
-				'tt' : values[0],
-				'dv' : values[1],
-				'db' : values[2],
-				'tc' : values[3],
-				'pu' : values[5]
-			}
+			if self.CONSTRAINT not in values[0]:
+				tituloInfo = {
+					'tt'  : values[0][8:],
+					'dv'  : values[1],
+					'db'  : values[2],
+					'tc'  : values[3],
+					'tv'  : values[4],
+					'puc' : values[5],
+					'puv' : values[6]
+				}
 
-			tituloInfoVenda = {
-				'tt' : values[0],
-				'dv' : values[1],
-				'db' : values[2],
-				'tv' : values[4],
-				'pu' : values[6]
-			}
-
-			self._titulosCompra.append(Titulo(tituloInfoCompra))
-			self._titulosVenda.append(Titulo(tituloInfoVenda))
+				self._titulos.append(Titulo(tituloInfo))
 
 			line = data.readline()
 
-		return self._titulosCompra, self._titulosVenda, datetime.now()
+		return self._titulos, datetime.now()

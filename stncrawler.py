@@ -7,31 +7,45 @@ from stnparser import StnPageParser, StnFileParser
 class StnPageCrawler():
 
 	def __init__(self):
+		self.stnpageparser = StnPageParser()
+
 		self.ctx = ssl.create_default_context()
 		self.ctx.check_hostname = False
 		self.ctx.verify_mode = ssl.CERT_NONE
 
-		self.stnpageparser = StnPageParser()
-
 	def crawling(self):
-		stnPage = urllib.request.urlopen(STN_PAGE)
+		try:
+			stnPage = urllib.request.urlopen(STN_PAGE)
 		
-		return self.stnpageparser.parse(str(stnPage.read()))
+			return self.stnpageparser.parse(str(stnPage.read()))
+
+		except:
+			stnPage = open(STN_OFFLINE_PAGE, "r", encoding='latin1')
+
+			return self.stnpageparser.parse(stnPage.read().replace('\n',''))
 
 class StnFileCrawler():
 
 	def __init__(self):
-		#self.ctx = ssl.create_default_context()
-		#self.ctx.check_hostname = False
-		#self.ctx.verify_mode = ssl.CERT_NONE
-
 		self.stnfileparser = StnFileParser()
 
-		#with urllib.request.urlopen(STN_URL, context=self.ctx) as u, \
-		#        open(STN_FILE, 'wb') as f:
-		#    f.write(u.read())
+		if not OFFLINE_FLAG:
+			self.ctx = ssl.create_default_context()
+			self.ctx.check_hostname = False
+			self.ctx.verify_mode = ssl.CERT_NONE
+
+			with urllib.request.urlopen(STN_URL, context=self.ctx) as u, \
+			        open(STN_FILE, 'wb') as f:
+			    f.write(u.read())
 
 	def crawling(self):
 		self.filedata = open(STN_FILE, "r")
 
 		return self.stnfileparser.parse(self.filedata)
+
+if __name__ == "__main__":
+	page = StnFileCrawler()
+	titulos_compra, data = page.crawling()
+
+	for t in titulos_compra:
+		print(t)
