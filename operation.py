@@ -6,28 +6,30 @@ import time
 
 class Operation():
 
-	def __init__(self, titulo, compraVenda, qnt):
+	def __init__(self, titulo, compraVenda, valorAplicado):
 		self._titulo = titulo
 		self._data_operacao = titulo.getDb()
 		self._tipo_operacao = compraVenda
 		self._pu_contratado = titulo.getPu('compra')
 		self._dt_liquidacao = 2 if self._data_operacao < NOVA_LIQUIDACAO else 1
-		self._qnt = qnt
+		self._valor_aplicado = valorAplicado
+		self._qnt = valorAplicado / self._pu_contratado
 
 	def calculaRendimentoTotal(self, pu_atual, data_atual):
-		diff = pu_atual - self._pu_contratado
+		diff = pu_atual * self._qnt - self._valor_aplicado
 		
 		if diff > 0:
 			ir = diff * self._ir(data_atual)
 			iof = (diff - ir) * self._iof(data_atual)
-			b3 = pu_atual * self._b3(data_atual)
+			b3 = pu_atual * self._qnt * self._b3(data_atual)
 
-			print("IR: ", round(ir * self._qnt, 2), "IOF: ", round(iof * self._qnt, 2), "B3: ", round(b3 * self._qnt, 2))
+			#print("IR: ", round(ir, 2), "IOF: ", round(iof, 2), "B3: ", round(b3, 2))
 
-			return (diff - ir - iof - b3) / self._pu_contratado
+			return (diff - ir - iof - b3) / self._valor_aplicado
+			#return (diff) / self._valor_aplicado
 
 		else:
-			return diff / self._pu_contratado
+			return diff / self._valor_aplicado
 
 	def calculaRendimentoAnual(self, pu_atual, data_atual):
 		total_anos = ((data_atual - self._data_operacao).days - self._dt_liquidacao) / 365
@@ -40,7 +42,7 @@ class Operation():
 	def calculaRendimentoMensal(self, pu_atual, data_atual):
 		total_meses = ((data_atual - self._data_operacao).days - self._dt_liquidacao) / 30
 
-		return self.calculaRendimentoTotal(pu_atual) / total_meses
+		return self.calculaRendimentoTotal(pu_atual, data_atual) / total_meses
 
 	def getTipo(self):
 		pass
@@ -89,6 +91,53 @@ class Operation():
 
 		return taxa
 
-	def resgatar(self, pu, data_atual):
-		return self._qnt * (1 + self.calculaRendimentoTotal(pu, data_atual))
-		
+	def resgatar(self, pu_atual, data_atual):
+		return self._valor_aplicado * (1 + self.calculaRendimentoTotal(pu_atual, data_atual))
+
+if __name__ == "__main__":
+	titulos = [{
+		'tt'  : 'IPCA+', 
+		'dv'  : '15/05/2035',
+		'db'  : '07/11/2016',
+		'tc'  : '5,72',
+		'puc' : '1054,78'
+	}, {
+		'tt'  : 'IPCA+', 
+		'dv'  : '15/05/2035',
+		'db'  : '01/12/2016',
+		'tc'  : '6,18',
+		'puc' : '979,62'
+	}, {
+		'tt'  : 'IPCA+', 
+		'dv'  : '15/05/2035',
+		'db'  : '10/01/2017',
+		'tc'  : '5,7',
+		'puc' : '1074,20'
+	}, {
+		'tt'  : 'IPCA+', 
+		'dv'  : '15/05/2035',
+		'db'  : '23/01/2017',
+		'tc'  : '5,56',
+		'puc' : '1104,54'
+	}, {
+		'tt'  : 'IPCA+', 
+		'dv'  : '15/05/2035',
+		'db'  : '02/02/2017',
+		'tc'  : '5,47',
+		'puc' : '1125,53'
+	}]
+
+	valores_aplicados = [305.88, 303.68, 322.26, 828.40, 438.95]
+	precos_atuais = [1347.65, 1347.65, 1347.65, 1347.65, 1347.65]
+
+	array_titulos = []
+
+	for t in titulos:
+		titulo = Titulo(t)
+		print(titulo)
+		array_titulos.append(titulo)
+
+
+	for i in range(len(array_titulos)):
+		operation = Operation(array_titulos[i],'compra', valores_aplicados[i])
+		print(round(operation.calculaRendimentoTotal(precos_atuais[i], datetime.now()) * 100, 2))

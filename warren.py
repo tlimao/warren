@@ -20,9 +20,9 @@ class Warren():
 		self._data_plot = {}
 
 		self._data_final = datetime.now()
-		self._data_inicial = self._data_final + timedelta(days=-900)
+		self._data_inicial = self._data_final + timedelta(days=-300)
 
-		self._offset_janela = 30
+		self._offset_janela = 10
 		self._limite_superior_janela = self._data_inicial + timedelta(days=self._offset_janela)
 		self._limite_inferior_janela = self._data_inicial
 		self._janela_taxas = []
@@ -34,9 +34,9 @@ class Warren():
 		self._MM_WINDOW_SHORT = 2
 		self._MM_WINDOW_LONG = 30
 
-		self._meta_rendimento = 0.1 # 10%
+		self._meta_rendimento = 0.02 # 10%
 		self._saldo_disponivel = 50000.00 # R$ 50.000,00 Reais
-		self._valor_operacao = self._saldo_disponivel * 0.1 # 25% do Capital Inicial
+		self._valor_operacao = self._saldo_disponivel * 0.05 # 25% do Capital Inicial
 		self._minhas_operacoes = None
 
 		self._historico_operacoes = []
@@ -94,8 +94,8 @@ class Warren():
 			s_data = titulos['datas'][i]
 			s_mm_short = titulos['mm_short'][i]
 			s_mm_long = titulos['mm_long'][i]
-
 			s_preco_compra, s_preco_venda = s_titulo.getPu()
+
 			# Atualizar máximos e mínimos
 			if self._minimo_global[0] > s_tx_compra:
 				self._minimo_global = [s_tx_compra, s_data]
@@ -118,8 +118,8 @@ class Warren():
 				self._limite_superior_janela = self._limite_superior_janela + timedelta(days=self._offset_janela)
 				self._minimo_local = [s_tx_compra, s_data]
 				self._maximo_local = [s_tx_compra, s_data]
-				self._coefficients, residuals, _, _, _ = np.polyfit(range(len(self._janela_taxas)), self._janela_taxas,1,full=True)
-				self._trend_lines.append([self._janela_datas, self._janela_taxas, self._coefficients])
+				self._coefficients, residuals, _, _, _ = np.polyfit(range(2), [self._janela_taxas[0], self._janela_taxas[-1]],1,full=True)
+				self._trend_lines.append([[self._janela_datas[0], self._janela_datas[-1]], [self._janela_taxas[0], self._janela_taxas[-1]], self._coefficients])
 				self._janela_taxas = [s_tx_compra]
 				self._janela_datas = [s_data]
 
@@ -135,23 +135,23 @@ class Warren():
 						self._minhas_operacoes.append(Operation(s_titulo, 'compra', qnt))
 						self._saldo_disponivel -= qnt
 						self._historico_operacoes.append([s_data, s_tx_compra, 'compra'])
-						#print("COMPRA ", s_data, s_tx_compra, qnt, self._saldo_disponivel)
+						print("COMPRA ", s_data, s_tx_compra, qnt, self._saldo_disponivel)
 
 				# Mudança de - para +
 				else:
-					if self._trend_lines[-1][2][0] < 0:
+					if self._trend_lines[-1][2][0] < 0 and len(self._minhas_operacoes) > 0:
 						# Vende se Lucro superar lucro meta
 						rendimento = 0
 						for o in self._minhas_operacoes:
-							rendimento += o.calculaRendimentoTotal(s_preco_venda, s_titulo.getDb())
+							rendimento += o.calculaRendimentoMensal(s_preco_venda, s_titulo.getDb())
 
-						if rendimento > self._meta_rendimento:
+						if rendimento / len(self._minhas_operacoes) > self._meta_rendimento:
 							#print("Venda de Oportunidade")
 							for o in self._minhas_operacoes:
 								# Venda
 								self._saldo_disponivel += o.resgatar(s_preco_venda, s_titulo.getDb())
 								self._historico_operacoes.append([s_data, s_tx_venda, 'venda'])
-								#print("VENDA ", s_data, s_tx_compra, o.calculaRendimentoTotal(s_preco_venda), self._saldo_disponivel)
+								print("VENDA ", s_data, s_tx_compra, o.calculaRendimentoMensal(s_preco_venda, s_titulo.getDb()), self._saldo_disponivel)
 								
 							self._minhas_operacoes = []
 
@@ -159,7 +159,7 @@ class Warren():
 			P2 = [1 if (s_tx_compra - s_mm_short) >= 0 else -1, s_titulo.getTc(), s_titulo.getDb()]
 
 		# Zeragem
-		#print("Zeragem")
+		print("Zeragem")
 		s_preco_compra, s_preco_venda = titulos['titulos'][-1].getPu()
 
 		for o in self._minhas_operacoes:
@@ -167,7 +167,7 @@ class Warren():
 			self._saldo_disponivel += o.resgatar(s_preco_venda, s_titulo.getDb())
 			self._historico_operacoes.append([titulos['datas'][i], titulos['taxas_compra'][i], 'venda'])
 			self._minhas_operacoes = []
-			#print("VENDA ", titulos['datas'][i], o.calculaRendimentoTotal(s_preco_venda), self._saldo_disponivel)
+			print("VENDA ", titulos['datas'][i], o.calculaRendimentoTotal(s_preco_venda, s_titulo.getDb()), self._saldo_disponivel)
 
 		print(self._saldo_disponivel)
 		
@@ -189,9 +189,9 @@ class Warren():
 						label = key_tipo + " " + str(key_vencimento.year)
 						plt.xticks(rotation=70)
 						ax.plot(values_vencimento['datas'], values_vencimento[taxas], label=label)
-						s = pd.Series(values_vencimento[taxas])
-						ax.plot(values_vencimento['datas'], s.rolling(self._MM_WINDOW_SHORT).mean().tolist(), label=label + " MM")
-						ax.plot(values_vencimento['datas'], s.rolling(self._MM_WINDOW_LONG).mean().tolist(), label=label + " MM")
+						#s = pd.Series(values_vencimento[taxas])
+						#ax.plot(values_vencimento['datas'], s.rolling(self._MM_WINDOW_SHORT).mean().tolist(), label=label + " MM")
+						#ax.plot(values_vencimento['datas'], s.rolling(self._MM_WINDOW_LONG).mean().tolist(), label=label + " MM")
 
 			# format the ticks
 			ax.xaxis.set_major_locator(years)

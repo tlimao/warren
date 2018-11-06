@@ -14,12 +14,19 @@ class StnPageCrawler():
 		self.ctx.verify_mode = ssl.CERT_NONE
 
 	def crawling(self):
-		try:
-			stnPage = urllib.request.urlopen(STN_PAGE)
-		
-			return self.stnpageparser.parse(str(stnPage.read()))
+		if not OFFLINE_FLAG:
+			try:
+				stnPage = urllib.request.urlopen(STN_PAGE)
+			
+				return self.stnpageparser.parse(str(stnPage.read()))
 
-		except:
+			except:
+				print("Offline Page File")
+				stnPage = open(STN_OFFLINE_PAGE, "r", encoding='latin1')
+
+				return self.stnpageparser.parse(stnPage.read().replace('\n',''))
+		else:
+			print("Offline Page File")
 			stnPage = open(STN_OFFLINE_PAGE, "r", encoding='latin1')
 
 			return self.stnpageparser.parse(stnPage.read().replace('\n',''))
